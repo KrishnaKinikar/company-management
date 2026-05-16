@@ -1,22 +1,14 @@
 const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 
-// Generate Project ID
-const generateProjectId = (projectName) => {
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-
-  return (
-    projectName.substring(0, 3).toUpperCase() + randomNum
-  );
-};
 
 // SIGNUP
 const signup = async (req, res) => {
   try {
-    const { name, email, password, role, project_name } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Validation
-    if (!name || !email || !password || !role || !project_name) {
+    if (!name || !email || !password || !role) {
       return res.status(400).json({
         message: "All fields are required",
       });
@@ -39,40 +31,25 @@ const signup = async (req, res) => {
       // Hash Password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Generate Project ID
-      const projectId = generateProjectId(project_name);
+      // Generate Project ID from name
 
-      // Insert into project_names table
-      const projectQuery =
-        "INSERT INTO project_names (project_id, project_name) VALUES (?, ?)";
+
+      // Insert user with project_id
+      const userQuery =
+        "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
 
       db.query(
-        projectQuery,
-        [projectId, project_name],
-        (projectErr, projectResult) => {
-          if (projectErr) {
-            return res.status(500).json(projectErr);
+        userQuery,
+        [name, email, hashedPassword, role],
+        (userErr, userResult) => {
+          if (userErr) {
+            return res.status(500).json(userErr);
           }
 
-          // Insert user with project_id
-          const userQuery =
-            "INSERT INTO users (name, email, password, role, project_id) VALUES (?, ?, ?, ?, ?)";
-
-          db.query(
-            userQuery,
-            [name, email, hashedPassword, role, projectId],
-            (userErr, userResult) => {
-              if (userErr) {
-                return res.status(500).json(userErr);
-              }
-
-              res.status(201).json({
-                message: "Signup Successful",
-                project_id: projectId,
-                userId: userResult.insertId,
-              });
-            }
-          );
+          res.status(201).json({
+            message: "Signup Successful",
+            userId: userResult.insertId,
+          });
         }
       );
     });
@@ -115,15 +92,73 @@ const login = (req, res) => {
         });
       }
 
-      res.status(200).json({
-        message: "Login Successful",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          project_id: user.project_id,
-        },
+      // After successful login, lookup employee assignment by email
+      const empQuery = "SELECT project_id FROM employee WHERE email = ? LIMIT 1";
+      db.query(empQuery, [user.email], (empErr, empRows) => {
+        if (empErr) {
+          console.error('Employee lookup error:', empErr);
+          // return login success without assigned project
+          return res.status(200).json({
+            message: "Login Successful",
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              project_id: user.project_id,
+            },
+            assignedProject: null,
+          });
+        }
+
+        const assignedProjectId = empRows && empRows[0] ? empRows[0].project_id : null;
+
+        if (!assignedProjectId) {
+          return res.status(200).json({
+            message: "Login Successful",
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              project_id: user.project_id,
+            },
+            assignedProject: null,
+          });
+        }
+
+        // Fetch project details
+        const projQuery = "SELECT * FROM project_names WHERE project_id = ? LIMIT 1";
+        db.query(projQuery, [assignedProjectId], (projErr, projRows) => {
+          if (projErr) {
+            console.error('Project lookup error:', projErr);
+            return res.status(200).json({
+              message: "Login Successful",
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                project_id: user.project_id,
+              },
+              assignedProject: null,
+            });
+          }
+
+          const assignedProject = projRows && projRows[0] ? projRows[0] : null;
+
+          return res.status(200).json({
+            message: "Login Successful",
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              project_id: user.project_id,
+            },
+            assignedProject,
+          });
+        });
       });
     });
   } catch (error) {
