@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import Manager from './Manager'
+import EmployeePage from './EmployeePage'
 import './App.css'
 
 const API_BASE = 'http://localhost:5000/api/projects'
@@ -271,6 +272,7 @@ function App() {
       <Routes>
         <Route path="/" element={<OwnerView />} />
         <Route path="/manager" element={<Manager />} />
+        <Route path="/employees" element={<EmployeePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
