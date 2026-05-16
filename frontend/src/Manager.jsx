@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './App.css'
 
 const API_BASE = 'http://localhost:5000/api/projects'
+const EMPLOYEE_API = 'http://localhost:5000/api/employees'
 
 function Manager() {
+  const navigate = useNavigate()
   const [projects, setProjects] = useState([])
+  const [employees, setEmployees] = useState([])
   const [showModal, setShowModal] = useState(false)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [assignLoading, setAssignLoading] = useState(false)
+  const [selectedProjectForAssign, setSelectedProjectForAssign] = useState(null)
   const [editingProject, setEditingProject] = useState(null)
   const [formValue, setFormValue] = useState({
     projectName: '',
@@ -61,8 +68,63 @@ function Manager() {
   }
 
   const handleAssign = (project) => {
-    // Handle assign functionality here
-    console.log('Assign project:', project)
+    setSelectedProjectForAssign(project)
+    setShowAssignModal(true)
+    fetchEmployees()
+  }
+
+  const fetchEmployees = async () => {
+    setAssignLoading(true)
+    try {
+      const response = await fetch(EMPLOYEE_API)
+      if (!response.ok) {
+        console.error('Failed to load employees')
+        setEmployees([])
+        return
+      }
+      const data = await response.json()
+      setEmployees(data.employees || [])
+    } catch (error) {
+      console.error('Failed to load employees', error)
+      setEmployees([])
+    } finally {
+      setAssignLoading(false)
+    }
+  }
+
+  const closeAssignModal = () => {
+    setShowAssignModal(false)
+    setSelectedProjectForAssign(null)
+    setEmployees([])
+  }
+
+  const handleEmployeeSelect = async (employee) => {
+    // Update employee with project_id
+    try {
+      const response = await fetch(`${EMPLOYEE_API}/${employee.email}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId: selectedProjectForAssign.projectId,
+        }),
+      })
+
+      if (!response.ok) {
+        console.error('Failed to assign project to employee')
+        return
+      }
+
+      closeAssignModal()
+      alert(`Project ${selectedProjectForAssign.projectName} assigned to ${employee.employee_name}`)
+    } catch (error) {
+      console.error('Failed to assign project', error)
+    }
+  }
+
+  const openEmployeePage = () => {
+    navigate('/employees')
   }
 
   const handleChange = (event) => {
@@ -130,7 +192,7 @@ function Manager() {
         </div>
 
         <div className="header-actions">
-          <button className="add-button" type="button" onClick={openModal}>
+            <button className="add-button" type="button" onClick={openModal}>
             Add project
           </button>
         </div>
@@ -147,6 +209,15 @@ function Manager() {
         <section className="project-list">
           {sortedProjects.length > 0 ? (
             <div className="project-table">
+              <div className="table-actions">
+                <button
+                  type="button"
+                  className="employee-button"
+                  onClick={openEmployeePage}
+                >
+                  Employee
+                </button>
+              </div>
               <div className="table-header">
                 <div className="table-cell header-cell">ID</div>
                 <div className="table-cell header-cell">Project Name</div>
@@ -274,6 +345,45 @@ function Manager() {
           </div>
         </div>
       ) : null}
+
+      {showAssignModal ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Select Employee for {selectedProjectForAssign?.projectName}</h2>
+              <button type="button" className="modal-close" onClick={closeAssignModal}>
+                ×
+              </button>
+            </div>
+
+            <div className="employee-modal-content">
+              {assignLoading ? (
+                <div className="empty-state">
+                  <p>Loading employees...</p>
+                </div>
+              ) : employees.length > 0 ? (
+                <div className="employee-list-modal">
+                  {employees.map((employee) => (
+                    <div
+                      key={employee.email}
+                      className="employee-list-item"
+                      onClick={() => handleEmployeeSelect(employee)}
+                    >
+                      <div className="employee-list-id">{employee.id || '-'}</div>
+                      <div className="employee-list-name">{employee.employee_name || '-'}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p>No employees found.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
     </div>
   )
 }

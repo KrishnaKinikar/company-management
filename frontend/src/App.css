@@ -297,6 +297,66 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.25);
 }
 
+.table-actions {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+}
+
+.employee-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(90deg, #0d47a1 0%, #1976d2 60%, #ffffff 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(13, 71, 161, 0.14);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.employee-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(13, 71, 161, 0.2);
+}
+
+.employee-modal-content {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.employee-table {
+  display: grid;
+  gap: 6px;
+}
+
+.employee-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.employee-row.header-row {
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.35);
+}
+
+.employee-cell {
+  color: #334155;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.modal-panel.large {
+  width: min(100%, 960px);
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 60px 1fr 150px 120px 120px 120px 100px 100px;
@@ -351,6 +411,43 @@
 .assign-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.employee-list-modal {
+  display: grid;
+  gap: 8px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.employee-list-item {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  background: rgba(248, 251, 255, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.employee-list-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateX(4px);
+}
+
+.employee-list-id {
+  font-weight: 700;
+  color: #0d47a1;
+  font-size: 0.9rem;
+}
+
+.employee-list-name {
+  color: #334155;
+  font-size: 0.95rem;
 }
 
 .view-switch-button {
